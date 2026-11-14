@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String         @id @default(uuid())
+  email               String         @unique
+  password            String
+  name                String
+  profileImage        String?
+  role                String         @default("USER") // USER | ADMIN
+  status              String         @default("ACTIVE") // ACTIVE | BLOCKED
+  plan                String         @default("FREE") // FREE | STARTER | PRO
+  resumeCredits       Int            @default(10)
+  atsCredits          Int            @default(5)
+  isEmailVerified     Boolean        @default(false)
+  refreshToken        String?
+  otpCode             String?
+  otpExpiresAt        DateTime?
+  resetPasswordToken  String?
+  resetPasswordExpires DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  resumes             Resume[]
+  subscriptions       Subscription[]
+  jobSearches         JobSearchQuery[]
+  supportTickets      SupportTicket[]
+  jobApplications     JobApplication[]
+}
+
+model SupportTicket {
+  id        String   @id @default(uuid())
+  userId    String
+  subject   String
+  message   String
+  status    String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
+  priority  String   @default("MEDIUM") // LOW | MEDIUM | HIGH
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                   String   @id @default(uuid())
+  userId               String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  planType             String   @default("STARTER") // STARTER | PRO
+  resumeCreditsGranted Int      @default(50)
+  atsCreditsGranted    Int      @default(30)
+  status               String   @default("ACTIVE")
+  expiresAt            DateTime
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Template {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  name         String
+  description  String
+  category     String   @default("Technology")
+  layoutType   String   @default("SINGLE_COLUMN") // SINGLE_COLUMN | TWO_COLUMN
+  thumbnailUrl String?
+  isPremium    Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  htmlContent  String
+  cssStyles    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  resumes Resume[]
+}
+
+model Resume {
+  id                   String    @id @default(uuid())
+  userId               String
+  title                String    @default("Untitled Resume")
+  originalFileUrl      String?
+  extractedText        String?
+  extractedTargetTitle String?   @default("Software Engineer")
+  parsedContent        String?   // JSON stringified structured content
+  targetMarketStrategy String?   @default("FAANG") // FAANG | EUROPEAN_CV | SAUDI_GULF | GENERAL_ATS
+  jobDescriptionText   String?
+  overallAtsScore      Int       @default(0)
+  previousScore        Int       @default(0)
+  scoreBreakdown       String?   // JSON stringified sub-scores
+  improvementSummary   String?   // Bulleted improvements string
+  tailoredContent      String?   // JSON stringified optimized content
+  templateId           String?
+  compiledPdfUrl       String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template Template? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+}
+
+model JobSearchQuery {
+  id                 String   @id @default(uuid())
+  userId             String
+  queryText          String
+  location           String?
+  jobType            String?  @default("REMOTE") // REMOTE | HYBRID | PHYSICAL
+  salaryExpectation  String?
+  results            String   // JSON stringified array of scraped job postings
+  createdAt          DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JobApplication {
+  id          String   @id @default(uuid())
+  userId      String
+  jobTitle    String
+  company     String
+  applyUrl    String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SystemConfig {
+  id                   String   @id @default("default_config")
+  defaultSignupResumeCredits Int @default(10)
+  defaultSignupAtsCredits    Int @default(5)
+  updatedAt            DateTime @updatedAt
+}
+
+model SystemLog {
+  id        String   @id @default(uuid())
+  level     String   @default("INFO")
+  message   String
+  details   String?
+  createdAt DateTime @default(now())
+}

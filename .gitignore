@@ -1,0 +1,20 @@
+# Environment files
+.env
+.env.*
+.env*.local
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+
+# SQLite & Database
+*.db
+*.db-journal
+dev.db
+prisma/*.db
+
+# Logs
+*.log
