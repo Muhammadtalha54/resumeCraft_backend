@@ -27,15 +27,17 @@ export class JobScraperService {
    * Search and scrape jobs by delegating to the standalone Scraper Microservice
    */
   static async searchAndScrapeJobs(filters: JobFilterParams): Promise<JobListing[]> {
-    const rawScraperUrl = process.env.SCRAPER_SERVICE_URL;
     const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
-    const scraperUrl = rawScraperUrl || (!isProduction ? 'http://localhost:5001/api/scrape' : '');
+    const defaultScraper = isProduction
+      ? 'https://resumecraft-scrapper-1.onrender.com/api/scrape'
+      : 'http://localhost:5001/api/scrape';
+    const scraperUrl = process.env.SCRAPER_SERVICE_URL || defaultScraper;
 
-    if (scraperUrl && (!isProduction || !scraperUrl.includes('localhost'))) {
+    if (scraperUrl) {
       try {
         console.log(`[JobScraperService] Calling scraper microservice at: ${scraperUrl}`);
         const response = await axios.post(scraperUrl, filters, {
-          timeout: 3500,
+          timeout: 8000,
           headers: { 'Content-Type': 'application/json' }
         });
 
