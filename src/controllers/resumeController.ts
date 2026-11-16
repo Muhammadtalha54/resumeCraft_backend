@@ -52,7 +52,7 @@ export class ResumeController {
       // Deduct 1 ATS Credit
       const updatedUser = await prisma.user.update({
         where: { id: userId },
-        data: { atsCredits: user.atsCredits - 1 }
+        data: { atsCredits: Math.max(0, user.atsCredits - 1) }
       });
 
       // Save Resume Record to DB
@@ -164,20 +164,39 @@ export class ResumeController {
       // Deduct 1 Resume Credit
       const updatedUser = await prisma.user.update({
         where: { id: userId },
-        data: { resumeCredits: user.resumeCredits - 1 }
+        data: { resumeCredits: Math.max(0, user.resumeCredits - 1) }
       });
+
+      // Resolve valid templateId (supporting either UUID or slug)
+      let resolvedTemplateId: string | null = null;
+      if (templateId && typeof templateId === 'string' && templateId.trim().length > 0) {
+        const found = await prisma.template.findFirst({
+          where: {
+            OR: [
+              { id: templateId.trim() },
+              { slug: templateId.trim() }
+            ]
+          }
+        });
+        if (found) {
+          resolvedTemplateId = found.id;
+        }
+      }
+      if (!resolvedTemplateId) {
+        resolvedTemplateId = existingResume.templateId || null;
+      }
 
       // Update Resume Record
       const updatedResume = await prisma.resume.update({
         where: { id: resumeId },
         data: {
-          jobDescriptionText,
+          jobDescriptionText: effectiveJobDescription,
           targetMarketStrategy,
           previousScore: existingResume.overallAtsScore,
           overallAtsScore: tailoredResult.newAtsScore || 94,
           improvementSummary: JSON.stringify(tailoredResult.improvementsMade || []),
           tailoredContent: JSON.stringify(tailoredResult.tailoredStructuredResume || {}),
-          templateId: templateId || existingResume.templateId
+          templateId: resolvedTemplateId
         }
       });
 
@@ -280,8 +299,28 @@ export class ResumeController {
       // Deduct 1 Resume Credit
       const updatedUser = await prisma.user.update({
         where: { id: userId },
-        data: { resumeCredits: user.resumeCredits - 1 }
+        data: { resumeCredits: Math.max(0, user.resumeCredits - 1) }
       });
+
+      // Resolve valid templateId (supporting either UUID or slug)
+      let resolvedTemplateId: string | null = null;
+      if (templateId && typeof templateId === 'string' && templateId.trim().length > 0) {
+        const found = await prisma.template.findFirst({
+          where: {
+            OR: [
+              { id: templateId.trim() },
+              { slug: templateId.trim() }
+            ]
+          }
+        });
+        if (found) {
+          resolvedTemplateId = found.id;
+        }
+      }
+      if (!resolvedTemplateId) {
+        const defaultTemplate = await prisma.template.findFirst({ where: { isActive: true } });
+        resolvedTemplateId = defaultTemplate?.id || null;
+      }
 
       // Save to Database
       const structuredResume = aiResult.tailoredStructuredResume || {};
@@ -299,7 +338,7 @@ export class ResumeController {
           improvementSummary: JSON.stringify(aiResult.improvementSummary || []),
           tailoredContent: JSON.stringify(structuredResume),
           jobDescriptionText,
-          templateId: templateId || undefined
+          templateId: resolvedTemplateId
         }
       });
 
