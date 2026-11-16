@@ -66,6 +66,7 @@ app.post('/api/resumes/create-from-scratch', authenticate, ResumeController.crea
 app.post('/api/resumes/tailor', authenticate, ResumeController.tailorResume);
 app.put('/api/resumes/:id/content', authenticate, ResumeController.updateContent);
 app.get('/api/resumes/export/:id', authenticate, ResumeController.exportPDF);
+app.get('/resumes/export/:id', authenticate, ResumeController.exportPDF);
 app.get('/api/resumes/history', authenticate, ResumeController.getHistory);
 
 // ==================== TEMPLATES ROUTES ====================
