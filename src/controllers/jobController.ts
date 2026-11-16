@@ -9,14 +9,15 @@ export class JobController {
    */
   static async searchJobs(req: AuthRequest, res: Response) {
     try {
-      const { jobTitle, location, jobType, salaryExpectation } = req.query;
+      const { jobTitle, location, jobType, salaryExpectation, q, dateFilter, postedWithin } = req.query;
       const userId = req.user?.id;
 
       const filters = {
-        jobTitle: (jobTitle as string) || 'Software Engineer',
-        location: (location as string) || 'Remote',
-        jobType: (jobType as string) || 'REMOTE',
-        salaryExpectation: (salaryExpectation as string) || '$70,000 - $110,000 / year'
+        jobTitle: (jobTitle as string) || (q as string) || 'Software Engineer',
+        location: (location as string) || '',
+        jobType: (jobType as string) || 'ALL',
+        salaryExpectation: (salaryExpectation as string) || '$70,000 - $110,000 / year',
+        dateFilter: (dateFilter as string) || (postedWithin as string) || 'all'
       };
 
       const jobListings = await JobScraperService.searchAndScrapeJobs(filters);

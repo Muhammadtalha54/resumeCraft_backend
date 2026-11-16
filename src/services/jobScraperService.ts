@@ -5,6 +5,7 @@ export interface JobFilterParams {
   location?: string;
   jobType?: 'REMOTE' | 'HYBRID' | 'PHYSICAL' | string;
   salaryExpectation?: string;
+  dateFilter?: string;
 }
 
 export interface JobListing {

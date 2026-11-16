@@ -349,8 +349,9 @@ export class PaymentController {
 
       if (process.env.STRIPE_WEBHOOK_SECRET && sig) {
         try {
+          const payload = req.rawBody || req.body;
           event = stripe.webhooks.constructEvent(
-            req.body,
+            payload,
             sig,
             process.env.STRIPE_WEBHOOK_SECRET
           );

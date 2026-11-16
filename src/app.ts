@@ -20,8 +20,31 @@ const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+  verify: (req: any, _res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 app.use('/public', express.static(path.join(process.cwd(), 'public')));
+
+// Health Check Endpoints (for Render and uptime monitoring)
+app.get('/health', (_req: Request, res: Response) => {
+  return res.status(200).json({
+    status: 'ok',
+    service: 'ResumeCraft Backend API',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/health', (_req: Request, res: Response) => {
+  return res.status(200).json({
+    status: 'ok',
+    service: 'ResumeCraft Backend API',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Initialize Background Cron Jobs (7-day history auto-purge)
 initCronJobs();
